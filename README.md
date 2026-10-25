@@ -6,25 +6,21 @@ Este proyecto permite administrar un pequeño punto de venta: mantener los catá
 
 La forma más sencilla de revisarlo es ejecutar la demostración en Windows. El iniciador prepara su propia base con datos ficticios; no necesita las contraseñas del estudiante ni acceso a Azure.
 
-### 1. Antes de comenzar
+### 1. Para dar inicio
 
-Instale estos dos componentes si aún no los tiene:
+Instale estos dos componentes :
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0). Para esta opción se necesita el SDK; el Runtime por sí solo no compila el proyecto.
 - [MySQL Server 8.0](https://dev.mysql.com/downloads/installer/). MySQL Workbench por sí solo no incluye el servidor. El iniciador busca los ejecutables en `C:\Program Files\MySQL\MySQL Server 8.0\bin`.
 
-Necesitará Internet durante la primera compilación para descargar los paquetes NuGet. La carpeta debe permitir escritura. Si MySQL está instalado en otra ubicación, ajuste `$mysqlHome` en `Iniciar.ps1`.
-
 ### 2. Descargar y abrir
 
-1. En GitHub, seleccione **Code → Download ZIP** y extraiga todo su contenido. También puede clonar el repositorio con Git.
+1. En GitHub, seleccione **Code → Download ZIP** y extraiga todo su contenido. 
 2. Abra la carpeta donde aparecen `PuntoVenta.csproj`, `INICIAR.cmd` y `Program.cs`.
-3. Haga doble clic en **INICIAR.cmd**. Mantenga abierta la consola hasta ver **PUNTO DE VENTA LISTO**. El primer inicio tarda más porque prepara la base y compila.
+3. Haga doble clic en **INICIAR.cmd**. Mantenga abierta la consola hasta ver **PUNTO DE VENTA LISTO**. 
 4. Abra **http://127.0.0.1:5080**.
 
-El iniciador utiliza una instancia independiente de MySQL en `127.0.0.1:3307` y la aplicación en el puerto `5080`. Si esos puertos están ocupados por otro programa, primero resuelva el conflicto.
-
-### 3. Credenciales para ingresar
+El iniciador utiliza una instancia independiente de MySQL en `127.0.0.1:3307` y la aplicación en el puerto `5080`. 
 
 | Pestaña de acceso | Usuario | Contraseña |
 |---|---|---|
@@ -35,7 +31,7 @@ Las contraseñas se generan automáticamente para cada instalación nueva. Copie
 
 El administrador tiene acceso a todo. El empleado de demostración tiene los roles de Vendedor y Comprador. Para revisar el rol Administrativo o probar combinaciones distintas, ingrese como administrador y utilice **Cuentas y roles**. Cada empleado necesita su propia cuenta; registrar al empleado no crea automáticamente su acceso.
 
-### 4. Recorrido sugerido para evaluar
+### 4. Recorrido 
 
 1. Inicie sesión como administrador y observe el menú y el resumen del negocio.
 2. En Marcas y Puestos, cree un registro temporal, búsquelo, edítelo y elimínelo.
@@ -105,7 +101,8 @@ Los logs y la configuración local pueden contener información privada; no debe
 
 ## Instalación en IIS y laboratorio UMG
 
-El proyecto se publicó en IIS dentro del laboratorio y el autor confirmó el acceso desde otra máquina virtual el 23 de octubre de 2026. Esa instancia requiere que el servidor esté encendido y que el equipo cliente tenga conectividad a la red del laboratorio. Las credenciales de esa instancia se entregan al docente por un medio privado; las de una copia nueva son las indicadas arriba.
+El proyecto se publicó en IIS dentro del laboratorio y confirme el acceso desde otra máquina virtual.
+Esa instancia requiere que el servidor esté encendido y que el equipo cliente tenga conectividad a la red del laboratorio. Las credenciales de esa instancia se revisaran con el Inge Cardona por separado; las de una copia nueva son las indicadas arriba.
 
 Para publicar una instalación propia:
 
@@ -120,10 +117,11 @@ El repositorio contiene código; GitHub Pages no ejecuta esta aplicación .NET. 
 
 ## Pruebas realizadas
 
-La versión funcional anterior registró 13 grupos de integración, 11 de sesiones y roles y 5 de reportes. Los resultados están en `Pruebas/resultado-*.json`. También se revisaron los flujos en navegador. La copia preparada para GitHub compiló sin errores; los registros históricos no representan una nueva ejecución de todas las pruebas sobre esta copia.
+La versión funcional anterior registró 13 grupos de integración, 11 de sesiones y roles y 5 de reportes. Los resultados están en `Pruebas/resultado-*.json`. También se revisaron los flujos en navegador.
 
 Para repetir los scripts configure `PV_TEST_URL` y `PV_TEST_PASSWORD`; `reportes.py` también necesita `PV_EMPLOYEE_PASSWORD`. Use una base destinada a pruebas: `integracion.py` y `sesiones_roles.py` crean registros. `reportes.py` verifica consultas sin modificar datos comerciales. Las sesiones de prueba se generan en la base indicada.
 
 ## Autor
 
-Eddy Soto · Programación II · Universidad Mariano Gálvez de Guatemala.
+Eddy Soto · Programación II  Seccion B · Universidad Mariano Gálvez de Guatemala.
+Grupo # 3
