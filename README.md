@@ -1,147 +1,129 @@
-# Punto de Venta — avance de Programación II
+# Punto de Venta · Programación II · UMG
 
-Aplicación en .NET 10, ASP.NET Core Web API con controladores, Blazor Server interactivo, Entity Framework Core 10 y MySQL 8.0. Blazor consume los controladores mediante HttpClient y JWT.
+Este proyecto permite administrar un pequeño punto de venta: mantener los catálogos, recibir compras, registrar ventas y consultar reportes. Se desarrolló con .NET 10, ASP.NET Core Web API, Blazor interactivo, Entity Framework Core y MySQL 8.0.
 
-## Abrir la demostración
+## Para el docente: cómo probarlo
 
-1. Abra esta carpeta y haga doble clic en **INICIAR.cmd**.
-2. Espere el mensaje `PUNTO DE VENTA LISTO`.
-3. Abra http://127.0.0.1:5080.
-4. Seleccione **Administrador**: usuario **admin**, contraseña generada por el iniciador y mostrada en la consola local.
-5. Para acceso de empleado, seleccione **Empleado**: usuario **EMPLEADO**, contraseña generada y mostrada en la consola local. La cuenta inicial está vinculada al primer empleado activo y tiene Vendedor y Comprador. El administrador puede ajustar sus roles en **Cuentas y roles**.
+La forma más sencilla de revisarlo es ejecutar la demostración en Windows. El iniciador prepara su propia base con datos ficticios; no necesita las contraseñas del estudiante ni acceso a Azure.
 
-Requiere el SDK .NET 10 y MySQL Server 8.0 en `C:\Program Files\MySQL\MySQL Server 8.0`. Se verificaron ambos en este equipo. El primer arranque tarda más porque crea y configura la base de demostración.
+### 1. Antes de comenzar
 
-El arranque prepara una instancia independiente de MySQL en el puerto **3307**, enlazada únicamente a 127.0.0.1. Los archivos de datos quedan en `.local/mysql`; la configuración está en `appsettings.Local.json`. El servidor MySQL del sistema utiliza su configuración habitual. Los datos de ejemplo son ficticios. Para cerrar los procesos de la demostración utilice **DETENER.cmd**; los datos se conservan.
+Instale estos dos componentes si aún no los tiene:
 
-Si los puertos 3307 o 5080 están ocupados por otra aplicación, revise el conflicto antes de iniciar. No elimine `.local` ni `appsettings.Local.json`: contienen la base de datos y sus credenciales locales. Nunca publique esos archivos en GitHub. Para una instalación nueva en otra carpeta, copie el código sin esos archivos y ejecute INICIAR.cmd; se crea una base nueva.
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0). Para esta opción se necesita el SDK; el Runtime por sí solo no compila el proyecto.
+- [MySQL Server 8.0](https://dev.mysql.com/downloads/installer/). MySQL Workbench por sí solo no incluye el servidor. El iniciador busca los ejecutables en `C:\Program Files\MySQL\MySQL Server 8.0\bin`.
 
-## Alcance del avance
+Necesitará Internet durante la primera compilación para descargar los paquetes NuGet. La carpeta debe permitir escritura. Si MySQL está instalado en otra ubicación, ajuste `$mysqlHome` en `Iniciar.ps1`.
 
-| Módulo | Funciones incluidas |
+### 2. Descargar y abrir
+
+1. En GitHub, seleccione **Code → Download ZIP** y extraiga todo su contenido. También puede clonar el repositorio con Git.
+2. Abra la carpeta donde aparecen `PuntoVenta.csproj`, `INICIAR.cmd` y `Program.cs`.
+3. Haga doble clic en **INICIAR.cmd**. Mantenga abierta la consola hasta ver **PUNTO DE VENTA LISTO**. El primer inicio tarda más porque prepara la base y compila.
+4. Abra **http://127.0.0.1:5080**.
+
+El iniciador utiliza una instancia independiente de MySQL en `127.0.0.1:3307` y la aplicación en el puerto `5080`. Si esos puertos están ocupados por otro programa, primero resuelva el conflicto.
+
+### 3. Credenciales para ingresar
+
+| Pestaña de acceso | Usuario | Contraseña |
+|---|---|---|
+| Administrador | `admin` | La que aparece como **Clave inicial admin (privada)** en la consola de inicio |
+| Empleado | `EMPLEADO` | La que aparece como **Clave inicial EMPLEADO (privada)** en esa misma consola |
+
+Las contraseñas se generan automáticamente para cada instalación nueva. Copie la clave completa de la consola y péguela en el formulario. Se conservan al volver a iniciar; no es necesario crear una cuenta de GitHub para ingresar al sistema. Si después cambia una contraseña desde Cuentas y roles, utilice la nueva; la clave inicial mostrada en consola no se actualiza con ese cambio.
+
+El administrador tiene acceso a todo. El empleado de demostración tiene los roles de Vendedor y Comprador. Para revisar el rol Administrativo o probar combinaciones distintas, ingrese como administrador y utilice **Cuentas y roles**. Cada empleado necesita su propia cuenta; registrar al empleado no crea automáticamente su acceso.
+
+### 4. Recorrido sugerido para evaluar
+
+1. Inicie sesión como administrador y observe el menú y el resumen del negocio.
+2. En Marcas y Puestos, cree un registro temporal, búsquelo, edítelo y elimínelo.
+3. Revise Clientes, Proveedores y Empleados. Compruebe los campos obligatorios, las listas relacionadas y los enlaces entre mantenimientos.
+4. Cree un producto con su marca, costo, precio, existencia e imagen PNG, JPG o WebP de hasta 2 MB.
+5. Registre una compra de 10 unidades con costo Q100.00. Revise la vista previa y confirme: la existencia aumenta en 10, el costo queda en Q100.00 y el precio de venta en Q125.00.
+6. En Ventas, busque un cliente por NIT o seleccione CF. Un NIT nuevo abre el formulario de alta de cliente.
+7. Intente vender más unidades de las disponibles: la operación debe rechazarse. Después venda 2 unidades, revise la factura y confirme; el total será Q250.00 si el producto conserva el precio anterior.
+8. Consulte los historiales y los reportes de Productos, Existencias, Compras y Ventas. Pruebe búsqueda, fechas y filtros de inventario. Imprimir / Guardar PDF utiliza el diálogo del navegador.
+9. Ingrese como empleado y compruebe que solo aparezcan las funciones de sus roles.
+10. Abra otra ventana del mismo navegador y dirección para comprobar que la sesión continúa. Al cerrar sesión, las ventanas que comparten esa sesión vuelven al acceso.
+
+Las compras y ventas confirmadas se consultan, pero no se editan ni se anulan. Las líneas sí se pueden corregir antes de registrar el documento. El documento imprimible es una factura interna del proyecto. El campo Sueldo registra el salario mensual; no calcula planillas ni liquidaciones.
+
+### 5. Cerrar la demostración
+
+Ejecute **DETENER.cmd**. Se detienen los procesos de la demostración y los registros se conservan para el siguiente inicio. No elimine `.local`, `.keys` ni `appsettings.Local.json`: contienen datos y configuración privada. Para respaldar una instalación también debe conservar sus imágenes.
+
+## Qué incluye
+
+- CRUD de Puestos, Empleados, Clientes, Proveedores, Marcas y Productos, con búsqueda y validaciones.
+- Imágenes en archivos locales; MySQL almacena su ruta.
+- Compras y Ventas Maestro–Detalle con varios productos, vistas previas, totales e historiales.
+- Actualización transaccional de inventario, costo de última compra y precio de venta con 25 % de recargo sobre costo.
+- Validación del precio oficial y de existencias, con protección frente a ventas simultáneas.
+- JWT, contraseñas con hash, sesión persistente durante siete días y cierre sincronizado de ventanas.
+- Roles combinables de Vendedor, Comprador y Administrativo; asignación de cuentas por el administrador.
+- Menú dinámico almacenado en MySQL, con estructura padre–hijo.
+- Cuatro reportes globales reservados al administrador.
+
+## Organización del código
+
+| Carpeta o archivo | Responsabilidad |
 |---|---|
-| Puestos y Marcas | Crear, consultar, editar, eliminar, buscar y rechazar duplicados |
-| Clientes y Proveedores | CRUD, búsqueda, validación de datos y NIT único |
-| Empleados | CRUD, puesto, validación de DPI/fechas, sueldo mensual, estado activo/egresado, fecha de egreso y reingreso |
-| Productos | CRUD, marca desde combo, enlaces con Marcas, precios, existencia, fecha e imagen local |
-| Compras | Encabezado y varios detalles en una pantalla; proveedor; agregar, editar y quitar líneas antes de confirmar; total; registro transaccional; historial y consulta de detalle |
-| Ventas | Cliente y empleado; varios productos; cantidades y totales; precio oficial desde la base; validación de stock; registro transaccional; historial y consulta de detalle |
-| Acceso | Administrador/Empleado, contraseñas con hash, JWT y sesión persistente/revocable durante 7 días |
-| Roles | Vendedor, Comprador y Administrativo combinables por empleado; administrador controla todo |
-| Menú | Opciones obtenidas de una tabla de MySQL con jerarquía padre–hijo |
+| `Program.cs` | Configuración, servicios, autenticación y arranque |
+| `Models` | Entidades, solicitudes y validaciones |
+| `Data/PosDb.cs` | Relaciones y configuración de MySQL mediante EF Core |
+| `Data/DbInitializer.cs` | Datos iniciales y menú |
+| `Controllers/CatalogosController.cs` | CRUD de los seis catálogos |
+| `Controllers/DocumentosController.cs` | Reglas de compras, ventas e inventario |
+| `Controllers/ReportesController.cs` | Consultas de los reportes |
+| `Controllers/CuentasController.cs` | Cuentas, roles y búsqueda NIT |
+| `Services` | Consumo HTTP de API, JWT y sesiones |
+| `Components/Pages` | Pantallas Blazor |
+| `Database` | Esquema y datos ficticios de referencia |
+| `Pruebas` | Pruebas de integración y resultados registrados |
 
-Una compra aumenta la existencia, actualiza el último precio de costo y calcula el precio de venta con **25 % de recargo sobre el costo**. Una venta disminuye la existencia y usa el precio vigente del producto. La actualización de inventario y el guardado del documento ocurren dentro de la misma transacción. Las filas de productos se bloquean mientras se confirma una operación para evitar sobreventa simultánea.
+La interfaz consume los controladores REST mediante HttpClient. El modelo corresponde a las entidades, la vista a Blazor y los controladores a la API. Interfaz y API se alojan en la misma aplicación.
 
-Los documentos confirmados se pueden consultar. **La edición, anulación o eliminación de compras y ventas ya confirmadas queda pendiente.** Esas operaciones necesitan reglas para revertir inventario y costos. La publicación en IIS dentro del laboratorio Azure UMG y el acceso desde otra máquina virtual se completaron y fueron confirmados por el autor el 23 de octubre de 2026. Los cuatro reportes obligatorios están incluidos. Ya se incluyen los roles solicitados de empleados, con restricciones en la interfaz y en la API.
+## Abrir el código fuente
 
-El porcentaje académico de Maestro–Detalle depende del criterio del docente. Este avance incluye el flujo completo de alta y consulta, las líneas editables antes de confirmar y las reglas principales de Compras/Ventas.
+En Visual Studio abra `PuntoVenta.csproj`. En Visual Studio Code abra la carpeta completa. Puede consultar varios archivos a la vez. Para la primera ejecución local utilice INICIAR.cmd, porque prepara MySQL y la configuración que necesita la aplicación.
 
-## Guion de demostración de 10 a 15 minutos
+## Si algo no inicia
 
-1. Iniciar sesión y mostrar el menú.
-2. Crear una Marca y un Puesto. Buscar, editar y eliminar un registro temporal sin relaciones.
-3. Mostrar Empleados y su combo de Puestos; mostrar Clientes y Proveedores.
-4. Crear o editar un Producto. Elegir marca y cargar una imagen PNG/JPG/WebP de hasta 2 MB. Guardar y mostrar la imagen en la lista. La base guarda únicamente la ruta.
-5. Revisar la existencia del Teclado inalámbrico (inicialmente 20).
-6. En Compras, elegir proveedor, agregar 10 teclados con costo Q100.00 y confirmar. Consultar su detalle. Comprobar existencia 30 y precio de venta Q125.00.
-7. En Ventas, buscar el cliente por NIT o pulsar CF (Cliente final). Si no existe el NIT, registrar al cliente en el modal. El administrador elige vendedor; los empleados venden bajo su propia identidad. Intentar agregar 31 teclados: se rechaza por stock insuficiente.
-8. Agregar 5 teclados y confirmar: aparece la vista previa de la factura, total Q625.00. Pulsar Registrar venta, revisar el documento confirmado y comprobar existencia 25. Las compras siguen el mismo flujo de revisión y registro.
-9. Mostrar que eliminar una marca o un puesto que tenga registros relacionados se rechaza con un mensaje.
-
-Los números de documento se sugieren a partir del historial. Si practica varias veces, continúe usando números nuevos. No vuelva a registrar el mismo número de compra o la misma combinación serie/número de factura. La sesión se recupera al recargar o abrir otra ventana del mismo navegador y perfil. Al cerrar sesión, todas las ventanas que comparten esa sesión vuelven al acceso. La cookie vence a los 7 días; un navegador distinto o una ventana de incógnito requiere su propio acceso.
-
-## Estructura para explicar el código
-
-- `Models/Entities.cs`: entidades y DTO con validaciones.
-- `Data/PosDb.cs`: tablas, relaciones, índices únicos y precisión de importes.
-- `Data/DbInitializer.cs`: creación inicial, administrador, menú y datos opcionales.
-- `Controllers/CatalogosController.cs`: GET, POST, PUT y DELETE de los seis catálogos.
-- `Controllers/DocumentosController.cs`: consultas y registro transaccional de Compras/Ventas.
-- `Controllers/SistemaController.cs`: acceso, menú e imágenes.
-- `Services/Security.cs`: JWT, permisos, validación de sesión y notificación de revocaciones.
-- `Controllers/CuentasController.cs`: cuentas y asignación de roles (solo administrador), búsqueda de cliente por NIT.
-- `Data/SchemaUpgrader.cs`: actualización aditiva de la base existente.
-- `wwwroot/session.js`: acceso mediante cookie y cierre sincronizado entre ventanas.
-- `Services/ApiClient.cs`: consumo HTTP de la API desde Blazor.
-- `Components/Shared/GenericCrud.razor`: lista, búsqueda, editor y confirmación de eliminación reutilizables.
-- `Components/Pages`: formularios y pantallas de operaciones.
-- `Database/esquema.sql`: estructura generada desde EF Core para una base nueva.
-- `Database/datos-demostracion.sql`: datos de ejemplo; requiere primero el esquema vacío.
-
-Las entidades conservan la información del diagrama, con nombres de propiedades C# y columnas en PascalCase; los identificadores son INT y las rutas de imágenes admiten 255 caracteres. Se añaden Usuarios, Menu y Revision en Productos para detectar ediciones obsoletas. Las contraseñas se guardan como hash. El proyecto utiliza un único host para interfaz y API, con responsabilidades separadas por carpetas; no requiere servicios de nube para esta demostración local.
-
-## Compilar y ejecutar manualmente
-
-Desde esta carpeta:
-
-```powershell
-dotnet restore --ignore-failed-sources -p:NuGetAudit=false
-dotnet build --no-restore
-dotnet run --no-launch-profile --urls http://127.0.0.1:5080
-```
-
-MySQL debe estar iniciado y `appsettings.Local.json` configurado. Si la aplicación ya está abierta, use DETENER.cmd antes de recompilar el ejecutable.
-
-## Usar otra base MySQL
-
-Detenga la aplicación. Cree una base vacía, por ejemplo `punto_venta_progra2`, y un usuario con permisos sobre esa base. Copie `appsettings.Local.example.json` a `appsettings.Local.json` y escriba la conexión, una clave JWT aleatoria de al menos 32 caracteres y la contraseña inicial del administrador. Cambie `LocalDemo` a false para que los scripts no intenten administrar su servidor habitual.
-
-Con `Database:Initialize=true`, EF crea las tablas cuando la base está vacía. SchemaUpgrader agrega las columnas y tablas de sesiones/roles a las bases de la versión anterior de forma idempotente. Respalde sus datos antes de actualizar; no elimina ni recrea la base existente. No utilice una base con otras tablas ni importe el SQL sobre datos que quiera conservar. Las claves y contraseñas de demostración deben cambiarse antes de exponer la aplicación fuera del equipo.
-
-## Pruebas
-
-`Pruebas/resultado-integracion.json` registra las pruebas realizadas en una base aislada: seis CRUD, búsqueda, duplicados, relaciones, JWT, compra y venta con varias líneas, precio oficial, rollback, concurrencia e imágenes. Se aprobaron 13 grupos de verificación. `Pruebas/integracion.py` permite repetirlas con Python 3, pero **crea datos de prueba en la API de http://127.0.0.1:5080**; úselo con una instancia destinada a pruebas. No lo ejecute justo antes de presentar sobre su base limpia.
-
-La revisión manual en navegador verificó el inicio de sesión, la creación de Puestos, la compra, la venta, el rechazo por existencias insuficientes y la carga/guardado de imagen.
-
-## Git y GitHub
-
-Esta copia de distribución utiliza un historial inicial limpio para excluir las antiguas credenciales de demostración. El desarrollo original se conserva en el repositorio local del autor. Revise `git status` antes de publicar; `.gitignore` excluye credenciales, datos locales, claves, binarios y las imágenes que suban los usuarios. Al respaldar datos reales copie también las imágenes de `wwwroot/images/productos`.
-
-
-
-
-## Sesiones y permisos de esta actualización
-
-El JWT se guarda en una cookie HttpOnly, SameSite=Strict, con Secure al servir HTTPS. En MySQL se conserva el identificador de la sesión y el SHA-256 del token, junto con su vencimiento/revocación. La contraseña del usuario tiene su hash separado. Cada petición de API comprueba que la sesión y el empleado sigan activos. La interfaz recupera la identidad de la conexión autenticada de Blazor sin almacenar el JWT en localStorage. Las escrituras desde cookie requieren una cabecera que impide enviarlas mediante un formulario de otro sitio.
-
-El cierre de sesión revoca ese token en la API y avisa a las ventanas conectadas. Cambiar roles, desactivar una cuenta o registrar el egreso del empleado revoca sus sesiones existentes. Un token copiado deja de funcionar tras su revocación. La sesión se comparte por navegador/perfil/origen: use siempre la misma dirección, por ejemplo 127.0.0.1, en lugar de alternarla con localhost.
-
-| Acceso | Color y operaciones |
+| Situación | Qué revisar |
 |---|---|
-| Administrador | Verde; todos los módulos, cuentas y asignación de roles |
-| Vendedor | Azul; NIT/CF, alta de cliente desde la venta, venta y facturas propias |
-| Comprador | Ámbar; registro de compras e historial de sus compras |
-| Administrativo | Morado; puestos, empleados, ingresos/egresos, sueldos y modificaciones |
-| Varios roles | Pantalla de selección con las funciones autorizadas; cada módulo usa su color |
+| No reconoce `dotnet` | Instale .NET 10 SDK y vuelva a abrir la consola |
+| No encuentra `mysqld.exe` | Verifique MySQL Server 8.0 y la ruta `$mysqlHome` |
+| Puerto 3307 o 5080 ocupado | Cierre la otra instancia o identifique el programa que usa el puerto |
+| La página dejó de responder | Confirme que el iniciador terminó y revise `.local/app-out.log` y `.local/app-error.log` |
+| MySQL no inicia | Revise `.local/mysql-error.log`; no elimine la base para corregirlo |
+| La contraseña no funciona | Seleccione la pestaña correcta y copie la clave de su instalación, sin espacios adicionales |
+| No recupera sesión en otra ventana | Use el mismo navegador, perfil y dirección; `localhost` y `127.0.0.1` son orígenes distintos |
 
-Los empleados no pueden elegir otro vendedor en una venta ni administrar las cuentas de acceso. Las bajas laborales conservan las operaciones históricas. Las compras y ventas confirmadas conservan una copia del nombre/NIT del tercero para que una modificación posterior del catálogo no reescriba el documento. Las operaciones antiguas mantienen su detalle y pueden consultarse.
+Los logs y la configuración local pueden contener información privada; no deben adjuntarse a un repositorio público sin revisión.
 
-El dato Sueldo es el salario mensual registrado; esta actualización no calcula planillas, descuentos ni liquidaciones. La vista previa es un documento interno del proyecto.
+## Instalación en IIS y laboratorio UMG
 
-`Pruebas/sesiones_roles.py` comprueba cookies, revocación, cuatro combinaciones de roles, aislamiento de historiales, búsquedas NIT/CF, alta de cliente, vistas previas, cambios de roles, sueldo y egreso. Configure `PV_TEST_URL` y `PV_TEST_PASSWORD` para una API de pruebas; ambos scripts generan registros y deben ejecutarse en una base destinada a pruebas. No pruebe roles cambiando cuentas de personas reales.
+El proyecto se publicó en IIS dentro del laboratorio y el autor confirmó el acceso desde otra máquina virtual el 23 de octubre de 2026. Esa instancia requiere que el servidor esté encendido y que el equipo cliente tenga conectividad a la red del laboratorio. Las credenciales de esa instancia se entregan al docente por un medio privado; las de una copia nueva son las indicadas arriba.
 
-## Reportes (22 de octubre de 2026)
+Para publicar una instalación propia:
 
-Ingrese como administrador y abra **Reportes** en el menú dinámico.
+1. Instale IIS con su consola y WebSocket Protocol; después instale .NET 10 Hosting Bundle.
+2. Genere la publicación: `dotnet publish -c Release -o C:\Sitios\PuntoVenta`.
+3. Configure MySQL y un archivo `appsettings.Local.json` privado usando el ejemplo incluido. Ajuste la conexión, clave JWT y `ApiBaseUrl` a la dirección real del sitio.
+4. Para una base vacía, configure `Database:Initialize=true` y una clave `Seed:AdminPassword` de al menos 10 caracteres durante la preparación; esta fase necesita permisos para crear y actualizar el esquema. `Seed:EmployeePassword` es opcional. Para una base completa ya importada, utilice `Database:Initialize=false` y una cuenta de aplicación con permisos de lectura y escritura.
+5. Cree un sitio IIS y un grupo dedicado con No Managed Code. La identidad del grupo necesita lectura de la publicación y modificación en `.keys` y `wwwroot/images/productos`.
+6. Permita el puerto HTTP/HTTPS únicamente desde la red autorizada y pruebe desde otro equipo. No es necesario exponer MySQL a los clientes.
 
-- Productos: producto, marca, existencia, costo unitario y precio de venta.
-- Existencias: unidades, valoración al costo y a precio de venta; filtros de stock bajo (5 o menos) y agotados. La valoración usa los precios actuales.
-- Compras: fecha, número, proveedor, NIT y total calculado desde los detalles.
-- Ventas: fecha, serie/número, cliente, NIT, empleado y total desde los detalles.
+El repositorio contiene código; GitHub Pages no ejecuta esta aplicación .NET. No incluye respaldos reales, sesiones, contraseñas del servidor ni imágenes privadas. El SQL de ejemplo no incluye cuentas con contraseñas predefinidas; el iniciador crea los accesos mediante configuración.
 
-Seleccione el tipo, complete los filtros y pulse **Generar reporte**. Las fechas son opcionales e incluyen ambos extremos. La búsqueda de productos admite nombre o marca; compras admite proveedor o NIT; ventas admite cliente, NIT o empleado. Los filtros aplicados aparecen en el documento. **Imprimir / Guardar PDF** abre la impresión del navegador; seleccione Guardar como PDF si lo necesita.
+## Pruebas realizadas
 
-Los informes son globales y están reservados al administrador: no amplían los permisos de empleados. No modifican existencias ni documentos. La opción se agrega automáticamente al menú de bases existentes al iniciar, sin recrear tablas.
+La versión funcional anterior registró 13 grupos de integración, 11 de sesiones y roles y 5 de reportes. Los resultados están en `Pruebas/resultado-*.json`. También se revisaron los flujos en navegador. La copia preparada para GitHub compiló sin errores; los registros históricos no representan una nueva ejecución de todas las pruebas sobre esta copia.
 
-`Pruebas/reportes.py` realiza cinco grupos de verificación sin crear ni modificar datos comerciales (inicia sesiones para validar permisos). Verifica relaciones, valores, fechas, totales, filtros, validaciones y acceso restringido. Resultado en `Pruebas/resultado-reportes.json`. El código está en `Controllers/ReportesController.cs`, `Models/Reportes.cs` y `Components/Pages/Reportes.razor`.
+Para repetir los scripts configure `PV_TEST_URL` y `PV_TEST_PASSWORD`; `reportes.py` también necesita `PV_EMPLOYEE_PASSWORD`. Use una base destinada a pruebas: `integracion.py` y `sesiones_roles.py` crean registros. `reportes.py` verifica consultas sin modificar datos comerciales. Las sesiones de prueba se generan en la base indicada.
 
-Despliegue IIS y conectividad entre máquinas virtuales: comprobados por el autor. Esta copia está preparada para publicarse en GitHub.
+## Autor
 
-## Credenciales de una instalación nueva
-
-No se distribuyen contraseñas ni hashes de cuentas reales. INICIAR.cmd genera claves aleatorias para admin y EMPLEADO cuando crea una configuración nueva; se muestran únicamente en su consola local. Las instalaciones existentes conservan sus credenciales. Si configura MySQL manualmente, defina Seed:AdminPassword; Seed:EmployeePassword es opcional. El administrador puede crear cuentas desde Cuentas y roles. No publique appsettings.Local.json.
-
-Los scripts de pruebas requieren PV_TEST_PASSWORD; los que usan la cuenta EMPLEADO también requieren PV_EMPLOYEE_PASSWORD. Úselos con una base de pruebas. Los resultados JSON incluidos corresponden a las verificaciones anteriores documentadas, no a una ejecución nueva de todos los tests de esta copia.
-
-El sitio en el laboratorio es privado y solo está disponible con el servidor encendido y conectividad a su red. El repositorio GitHub contiene el código; no es alojamiento de la aplicación .NET ni incluye los datos de la máquina virtual.
+Eddy Soto · Programación II · Universidad Mariano Gálvez de Guatemala.
