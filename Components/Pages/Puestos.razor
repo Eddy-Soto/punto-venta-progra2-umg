@@ -1,0 +1,9 @@
+@page "/catalogos/puestos"
+<GenericCrud TItem="Puesto" Endpoint="puestos" Title="Puestos" Description="Organice los puestos de su equipo." RelatedUrl="catalogos/empleados" RelatedLabel="Volver a Empleados" Columns="columns">
+<Editor Context="m">
+<div class="field"><label for="puestos-Nombre">Puesto *</label><input id="puestos-Nombre" class="form-control" @bind="m.Nombre" maxlength="50" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Nombre)"/></div>
+</Editor>
+</GenericCrud>
+@code {
+private Column[] columns=[new("Nombre","Puesto")];
+}

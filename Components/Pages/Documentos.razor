@@ -1,0 +1,129 @@
+@page "/documentos/{Tipo}"
+@inject ApiClient Api
+<PageTitle>@Titulo · Punto de Venta</PageTitle>
+<div class="page-heading"><div><span class="eyebrow">OPERACIONES / MAESTRO–DETALLE</span><h1>@Titulo</h1><p>@(EsCompra?"Registra el ingreso de productos y actualiza sus costos.":"Registra ventas y controla las salidas del inventario.")</p></div><button class="btn btn-outline-secondary" @onclick="Reload" disabled="@busy">Actualizar datos</button></div>
+@if(error is not null){<div class="alert alert-danger" role="alert">@error</div>}
+@if(success is not null){<div class="alert alert-success" role="status">@success</div>}
+@if(Tipo is not ("compras" or "ventas")){<p>El módulo solicitado no existe.</p>}
+else
+{
+<div class="document-tabs"><button class="@(history?"":"active")" @onclick="()=>history=false">Nueva @(EsCompra?"compra":"venta")</button><button class="@(history?"active":"")" @onclick="()=>history=true">Historial <span>@documentos.Count</span></button></div>
+@if(!history)
+{
+    <EditForm novalidate="novalidate" Model="documento" OnValidSubmit="Revisar" @key="documento"><DataAnnotationsValidator/><ValidationSummary/>
+    <section class="panel"><div class="section-title"><h2>01 · Datos del documento</h2><span class="tag">@(EsCompra?"Orden de compra":"Factura de venta")</span></div><div class="form-grid">
+    <div class="field"><label for="numero">@(EsCompra?"N.º de orden":"N.º de factura") *</label><input type="number" id="numero" class="form-control" min="1" @bind="documento.Numero" @bind:event="oninput"/><ValidationMessage For="@(()=>documento.Numero)"/></div>
+    @if(!EsCompra){<div class="field"><label for="serie">Serie *</label><input id="serie" class="form-control" maxlength="1" @bind="documento.Serie" @bind:event="oninput"/></div>}
+    <div class="field"><label for="fecha">Fecha *</label><InputDate id="fecha" class="form-control" @bind-Value="documento.Fecha"/></div>
+    @if(EsCompra)
+    {
+        <div class="field"><label for="tercero">Proveedor *</label><InputSelect id="tercero" class="form-select" @bind-Value="documento.TerceroId"><option value="0">Seleccione proveedor</option>@foreach(var t in terceros){<option value="@t.Id">@t.Nombre</option>}</InputSelect><ValidationMessage For="@(()=>documento.TerceroId)"/>@if(Api.Admin){<a class="field-link" href="catalogos/proveedores">Administrar proveedores →</a>}</div>
+    }
+    else
+    {
+        <div class="field nit-field"><label for="nit">NIT del cliente o CF *</label><div class="nit-search"><input id="nit" class="form-control" maxlength="20" placeholder="Ingresa NIT o CF" @bind="nit" @bind:event="oninput"/><button type="button" class="btn btn-primary" @onclick="BuscarCliente" disabled="@busy">Buscar</button><button type="button" class="btn btn-outline-secondary" @onclick="SeleccionarCF" disabled="@busy">CF</button></div><ValidationMessage For="@(()=>documento.TerceroId)"/>@if(cliente is not null){<div class="client-found"><strong>@cliente.NombreCompleto</strong><br/><span>NIT: @cliente.Nit @if(cliente.Telefono is not null){<span> · @cliente.Telefono</span>}</span></div>}</div>
+        @if(Api.Admin){<div class="field"><label for="empleado">Empleado *</label><InputSelect id="empleado" class="form-select" @bind-Value="documento.EmpleadoId"><option value="0">Seleccione empleado</option>@foreach(var e in empleados){<option value="@e.Id">@e.NombreCompleto</option>}</InputSelect></div>}
+        else{<div class="field"><label>Vendedor</label><div class="assigned-employee">@Api.Perfil?.Empleado</div></div>}
+    }
+    </div></section>
+    <section class="panel"><div class="section-title"><h2>02 · Productos del documento</h2>@if(Api.Admin){<a href="catalogos/productos" class="subtle-link">Ver catálogo →</a>}</div>
+    <div class="line-builder"><div class="field product-picker"><label for="producto">Producto</label><InputSelect TValue="int" id="producto" class="form-select" Value="productoId" ValueChanged="ProductoChanged" ValueExpression="@(()=>productoId)"><option value="0">Seleccione un producto</option>@foreach(var p in productos){<option value="@p.Id">@p.Nombre · Disponible: @p.Existencia</option>}</InputSelect></div><div class="field"><label for="cantidad">Cantidad</label><input type="number" id="cantidad" class="form-control" min="1" @bind="cantidad" @bind:event="oninput"/></div><div class="field"><label for="precio">@(EsCompra?"Costo unitario (Q)":"Precio unitario (Q)")</label><input type="number" id="precio" class="form-control" min="0.01" step="0.01" @bind="precio" disabled="@(!EsCompra)" @bind:event="oninput"/></div><button type="button" class="btn btn-primary" @onclick="Agregar" disabled="@busy">+ Agregar</button></div>
+    @if(selected is not null){<div class="inventory-hint">Existencia actual: <strong>@selected.Existencia</strong> unidades. @if(EsCompra){<span>Precio de venta después de esta compra: <strong>Q @decimal.Round(precio*1.25m,2,MidpointRounding.AwayFromZero).ToString("N2")</strong> (+25 %).</span>}</div>}
+    <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Producto</th><th>Cantidad</th><th>@(EsCompra?"Costo unitario":"Precio unitario")</th><th class="text-end">Subtotal</th><th></th></tr></thead><tbody>
+    @if(documento.Detalles.Count==0){<tr><td colspan="5" class="empty-state">Agrega uno o varios productos al documento.</td></tr>}
+    @foreach(var l in documento.Detalles){<tr><td><strong>@NombreProducto(l.ProductoId)</strong></td><td>@l.Cantidad</td><td>Q @l.Precio.ToString("N2")</td><td class="text-end">Q @((l.Cantidad*l.Precio).ToString("N2"))</td><td class="text-end"><button type="button" class="btn btn-sm btn-outline-secondary" @onclick="()=>EditarLinea(l)" disabled="@busy">Editar</button> <button type="button" class="btn btn-sm btn-outline-danger" @onclick="()=>documento.Detalles.Remove(l)" disabled="@busy">Quitar</button></td></tr>}
+    </tbody></table></div><div class="document-total"><span>@documento.Detalles.Count productos · @documento.Detalles.Sum(x=>(long)x.Cantidad) unidades</span><div><small>TOTAL DEL DOCUMENTO</small><strong>Q @Total.ToString("N2")</strong></div></div></section>
+    <div class="document-submit"><p>@(EsCompra?"Al confirmar: aumenta la existencia, se actualiza el costo y se calcula el precio de venta +25 %.":"Al confirmar: se verifica nuevamente la existencia y se descuentan las unidades vendidas. El precio vigente se valida en el servidor.")</p><button type="submit" class="btn btn-primary btn-lg" disabled="@(busy||documento.Detalles.Count==0)">@(busy?"Registrando…":EsCompra?"Confirmar compra":"Confirmar venta")</button></div>
+    </EditForm>
+}
+else
+{
+    <section class="panel"><div class="table-toolbar"><div><h2>Documentos registrados</h2><span class="muted">@documentos.Count operaciones</span></div><input class="form-control history-search" aria-label="Buscar documentos" placeholder="Buscar número o cliente/proveedor…" @bind="search" @bind:event="oninput"/></div><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Documento</th><th>Fecha</th><th>@(EsCompra?"Proveedor":"Cliente")</th>@if(!EsCompra){<th>Empleado</th>}<th class="text-end">Total</th><th></th></tr></thead><tbody>
+    @if(documentos.Count==0){<tr><td colspan="6" class="empty-state">Todavía no hay documentos registrados.</td></tr>}
+    @foreach(var d in documentos.Where(x=>string.IsNullOrWhiteSpace(search)||x.Tercero.Contains(search,StringComparison.OrdinalIgnoreCase)||$"{x.Serie}{x.Numero}".Contains(search,StringComparison.OrdinalIgnoreCase)))
+    {<tr><td><strong>@d.Serie@d.Numero.ToString("D5")</strong></td><td>@d.Fecha.ToString("dd/MM/yyyy")</td><td>@d.Tercero</td>@if(!EsCompra){<td>@d.Empleado</td>}<td class="text-end">Q @d.Total.ToString("N2")</td><td class="text-end"><button class="btn btn-sm btn-outline-primary" @onclick="()=>Mostrar(d)">Ver detalle</button></td></tr>}
+    </tbody></table></div></section>
+}
+}
+<DocumentoPreview Documento="detalle" EsCompra="EsCompra" Confirmado="confirmado" Busy="busy" OnConfirm="Guardar" OnClose="CerrarPreview"/>
+@if(nuevoCliente){<NuevoCliente Nit="@Permisos.Nit(nit)" OnSaved="ClienteGuardado" OnCancel="()=>nuevoCliente=false"/>}
+@code {
+    [Parameter] public string Tipo{get;set;}="";
+    private bool EsCompra=>Tipo=="compras";private string Titulo=>EsCompra?"Compras":"Ventas";
+    private DocumentoRequest documento=new();private List<Producto> productos=[];private List<Empleado> empleados=[];
+    private List<(int Id,string Nombre)> terceros=[];private List<DocumentoVista> documentos=[];private DocumentoVista? detalle;
+    private bool confirmado,nuevoCliente;
+    private Cliente? cliente;
+    private string nitValue="";
+    private string nit{get=>nitValue;set{nitValue=value;cliente=null;documento.TerceroId=0;}}
+    private int productoId,cantidad=1;private decimal precio;private bool busy,history;private string? error,success;private string search="";
+    private Producto? selected=>productos.FirstOrDefault(x=>x.Id==productoId);
+    private decimal Total=>documento.Detalles.Sum(x=>x.Cantidad*x.Precio);
+    protected override async Task OnParametersSetAsync(){history=false;detalle=null;success=null;documento=new();cliente=null;nitValue="";nuevoCliente=false;await Reload();}
+    private async Task Reload()
+    {
+        busy=true;error=null;
+        try
+        {
+            productos=await Api.Get<List<Producto>>("api/productos")??[];
+            if(EsCompra)terceros=(await Api.Get<List<Proveedor>>("api/proveedores")??[]).Select(x=>(x.Id,x.Nombre)).ToList();
+            else if(Api.Admin)empleados=(await Api.Get<List<Empleado>>("api/empleados")??[]).Where(x=>x.Activo).ToList();
+            else documento.EmpleadoId=Api.Perfil?.EmpleadoId??0;
+            documentos=await Api.Get<List<DocumentoVista>>("api/documentos/"+Tipo)??[];
+            if(documento.Detalles.Count==0)documento.Numero=await Api.Get<int>("api/documentos/"+Tipo+"/siguiente");
+        }
+        catch(Exception ex){error=ex.Message;}finally{busy=false;}
+    }
+    private async Task SeleccionarCF(){nit="CF";await BuscarCliente();}
+    private async Task BuscarCliente()
+    {
+        error=null;cliente=null;documento.TerceroId=0;
+        if(string.IsNullOrWhiteSpace(nit)){error="Ingrese un NIT o CF.";return;}
+        busy=true;
+        try
+        {
+            var result=await Api.Get<ClienteBusqueda>("api/clientes/por-nit?nit="+Uri.EscapeDataString(nit));
+            if(result?.Encontrado==true&&result.Cliente is not null)ClienteGuardado(result.Cliente);
+            else nuevoCliente=true;
+        }
+        catch(Exception ex){error=ex.Message;}finally{busy=false;}
+    }
+    private void ClienteGuardado(Cliente c){cliente=c;nitValue=c.Nit;documento.TerceroId=c.Id;nuevoCliente=false;}
+    private void Mostrar(DocumentoVista d){detalle=d;confirmado=true;}
+    private void CerrarPreview(){detalle=null;}
+    private async Task Revisar()
+    {
+        if(busy)return;error=null;
+        if(!EsCompra&&(cliente is null||documento.EmpleadoId<=0)){error="Busque el NIT/CF y seleccione un empleado válido.";return;}
+        busy=true;
+        try{detalle=await Api.Send<DocumentoVista>(HttpMethod.Post,"api/documentos/"+Tipo+"/previsualizar",documento);confirmado=false;}
+        catch(Exception ex){error=ex.Message;}finally{busy=false;}
+    }
+    private void ProductoChanged(int id){productoId=id;precio=EsCompra?selected?.PrecioCosto??0:selected?.PrecioVenta??0;cantidad=1;}
+    private string NombreProducto(int id)=>productos.FirstOrDefault(x=>x.Id==id)?.Nombre??"Producto";
+    private void Agregar()
+    {
+        error=null;success=null;
+        if(selected is null){error="Seleccione un producto.";return;}
+        if(cantidad<1 || cantidad>1000000){error="La cantidad debe estar entre 1 y 1,000,000.";return;}
+        if(precio<=0 || precio>999999.99m){error="Ingrese un precio válido mayor que cero.";return;}
+        if(documento.Detalles.Any(x=>x.ProductoId==productoId)){error="El producto ya está agregado. Use Editar para cambiar la cantidad.";return;}
+        if(!EsCompra && cantidad>selected.Existencia){error=$"Existencia insuficiente. Disponible: {selected.Existencia}.";return;}
+        documento.Detalles.Add(new(){ProductoId=productoId,Cantidad=cantidad,Precio=decimal.Round(precio,2,MidpointRounding.AwayFromZero)});
+        productoId=0;cantidad=1;precio=0;
+    }
+    private void EditarLinea(LineaRequest linea){productoId=linea.ProductoId;cantidad=linea.Cantidad;precio=linea.Precio;documento.Detalles.Remove(linea);}
+    private async Task Guardar()
+    {
+        if(busy)return;
+        if(!EsCompra && documento.EmpleadoId<=0){error="Seleccione un empleado.";return;}
+        busy=true;error=null;success=null;
+        try
+        {
+            var saved=await Api.Send<DocumentoVista>(HttpMethod.Post,"api/documentos/"+Tipo,documento);
+            var numero=documento.Numero;documento=new();cliente=null;nitValue="";productoId=0;precio=0;cantidad=1;detalle=saved;confirmado=true;
+            await Reload();history=true;success=$"{(EsCompra?"Compra":"Venta")} #{numero} registrada correctamente. El inventario fue actualizado.";
+        }
+        catch(Exception ex){error=ex.Message;detalle=null;}finally{busy=false;}
+    }
+}

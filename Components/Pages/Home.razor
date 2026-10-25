@@ -1,0 +1,23 @@
+@page "/"
+@inject ApiClient Api
+<PageTitle>Resumen · Punto de Venta</PageTitle>
+@if(!Api.Admin)
+{
+    <div class="page-heading"><div><span class="eyebrow">ACCESO DE EMPLEADO</span><h1>Hola, @Api.Perfil?.Empleado</h1><p>Selecciona una de tus funciones autorizadas.</p></div></div>
+    <div class="role-grid">
+    @if(Api.Vender){<a class="role-card role-seller" href="documentos/ventas"><span>↗</span><h2>Vendedor</h2><p>Busca clientes por NIT o CF, registra ventas y consulta tus facturas.</p><strong>Ir a Ventas →</strong></a>}
+    @if(Api.Comprar){<a class="role-card role-buyer" href="documentos/compras"><span>↙</span><h2>Comprador</h2><p>Registra compras de productos y consulta tus operaciones.</p><strong>Ir a Compras →</strong></a>}
+    @if(Api.Personal){<a class="role-card role-hr" href="catalogos/empleados"><span>♙</span><h2>Administrativo</h2><p>Gestiona ingresos, egresos, información de empleados y sueldos.</p><strong>Administrar personal →</strong></a>}
+    </div>
+}
+else
+{
+<div class="page-heading"><div><span class="eyebrow">ESPACIO DE TRABAJO</span><h1>Resumen del negocio</h1><p>Tu inventario y tus operaciones, al día.</p></div><span class="date-label">@DateTime.Today.ToString("dd / MM / yyyy")</span></div>
+@if(error is not null){<div class="alert alert-danger">@error</div>}
+<div class="stat-grid"><div class="stat-card"><span>Productos registrados</span><strong>@productos.Count</strong><small>Catálogo de productos</small></div><div class="stat-card"><span>Unidades disponibles</span><strong>@productos.Sum(x=>(long)x.Existencia)</strong><small>Existencia total en inventario</small></div><div class="stat-card"><span>Compras registradas</span><strong>@compras.Count</strong><small>Q @compras.Sum(x=>x.Total).ToString("N2") acumulados</small></div><div class="stat-card"><span>Ventas registradas</span><strong>@ventas.Count</strong><small>Q @ventas.Sum(x=>x.Total).ToString("N2") acumulados</small></div></div>
+<div class="dashboard-columns"><section class="panel"><span class="eyebrow">OPERACIONES</span><h2>Comienza una nueva operación</h2><a class="operation-link" href="documentos/ventas"><span class="operation-icon">↗</span><div><strong>Registrar venta</strong><p>Factura productos y actualiza las existencias.</p></div><span>→</span></a><a class="operation-link" href="documentos/compras"><span class="operation-icon purchase">↙</span><div><strong>Registrar compra</strong><p>Recibe productos y actualiza los precios.</p></div><span>→</span></a><a class="operation-link" href="catalogos/productos"><span class="operation-icon neutral">▦</span><div><strong>Administrar productos</strong><p>Consulta el catálogo, las imágenes y el inventario.</p></div><span>→</span></a></section><section class="panel"><div class="section-title"><h2>Existencias bajas</h2><span class="tag">5 unidades o menos</span></div>@if(productos.All(x=>x.Existencia>5)){<div class="empty-state">No hay productos con existencias bajas.</div>}@foreach(var p in productos.Where(x=>x.Existencia<=5).Take(8)){<div class="stock-row"><span>@p.Nombre</span><strong class="stock-low">@p.Existencia unidades</strong></div>}<a class="subtle-link" href="catalogos/productos">Ver inventario completo →</a></section></div>
+}
+@code {
+    List<Producto> productos=[];List<DocumentoVista> compras=[],ventas=[];string? error;
+    protected override async Task OnInitializedAsync(){if(!Api.Admin)return;try{productos=await Api.Get<List<Producto>>("api/productos")??[];compras=await Api.Get<List<DocumentoVista>>("api/documentos/compras")??[];ventas=await Api.Get<List<DocumentoVista>>("api/documentos/ventas")??[];}catch(Exception ex){error=ex.Message;}}
+}

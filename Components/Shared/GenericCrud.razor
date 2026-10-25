@@ -1,0 +1,88 @@
+@typeparam TItem where TItem : Entity, new()
+@inject ApiClient Api
+
+<PageTitle>@Title · Punto de Venta</PageTitle>
+<div class="page-heading"><div><span class="eyebrow">CATÁLOGOS / MANTENIMIENTO</span><h1>@Title</h1><p>@Description</p></div><button class="btn btn-primary" @onclick="Nuevo" disabled="@busy">+ Nuevo registro</button></div>
+@if(!string.IsNullOrWhiteSpace(RelatedUrl)) {<div class="related-link"><a href="@RelatedUrl">@RelatedLabel →</a></div>}
+@if(error is not null) {<div role="alert" class="alert alert-danger">@error</div>}
+@if(success is not null) {<div role="status" class="alert alert-success">@success</div>}
+@if(editing)
+{
+    <section class="panel editor-panel">
+        <div class="section-title"><h2>@(model.Id==0 ? "Nuevo registro" : $"Editar registro #{model.Id}")</h2><span class="muted">* Campos obligatorios</span></div>
+        <EditForm novalidate="novalidate" Model="model" OnValidSubmit="Guardar" @key="model">
+            <DataAnnotationsValidator/><ValidationSummary/>
+            <div class="form-grid">@Editor(model)</div>
+            @if(model is Producto product)
+            {
+                <div class="image-editor"><label>Imagen del producto · JPG, PNG o WebP, máximo 2 MB</label><InputFile OnChange="Upload" accept="image/jpeg,image/png,image/webp" disabled="@busy"/>
+                @if(!string.IsNullOrEmpty(product.Imagen)){<img src="@product.Imagen" alt="Vista previa del producto" class="preview-image"/>}</div>
+            }
+            <div class="form-actions"><button type="submit" class="btn btn-primary" disabled="@busy">@(busy?"Guardando…":"Guardar registro")</button><button type="button" class="btn btn-outline-secondary" @onclick="Cancelar" disabled="@busy">Cancelar</button></div>
+        </EditForm>
+    </section>
+}
+<section class="panel">
+    <div class="table-toolbar"><div><h2>Registros</h2><span class="muted">@filtered.Count de @rows.Count registros</span></div><div class="search-box"><input class="form-control" placeholder="Buscar en este catálogo…" aria-label="Buscar registros" @bind="search" @bind:event="oninput"/><button class="btn btn-outline-secondary" @onclick="Load" disabled="@busy">Actualizar</button></div></div>
+    <div class="table-responsive"><table class="table align-middle"><thead><tr><th>ID</th>@foreach(var c in Columns){<th>@c.Label</th>}<th class="text-end">Acciones</th></tr></thead><tbody>
+    @if(loading){<tr><td colspan="@(Columns.Length+2)" class="empty-state">Cargando registros…</td></tr>}
+    else if(filtered.Count==0){<tr><td colspan="@(Columns.Length+2)" class="empty-state">@(rows.Count==0?"Todavía no hay registros. Cree el primero para comenzar.":"No hay resultados para esta búsqueda.")</td></tr>}
+    @foreach(var row in filtered)
+    {
+        <tr><td class="muted">#@row.Id</td>@foreach(var c in Columns){<td>@if(c.Property=="Imagen" && row is Producto p){@if(p.Imagen is not null){<img class="product-thumb" src="@p.Imagen" alt="@p.Nombre"/>}else{<span class="muted">Sin imagen</span>}}else{@Cell(row,c.Property)}</td>}
+        <td class="text-end action-cell"><button class="btn btn-sm btn-outline-primary" @onclick="()=>Editar(row)" disabled="@busy">Editar</button><button class="btn btn-sm btn-outline-danger" @onclick="()=>pendingDelete=row" disabled="@busy">Eliminar</button></td></tr>
+    }
+    </tbody></table></div>
+</section>
+@if(pendingDelete is not null)
+{
+    <div class="modal-backdrop-custom"><section class="confirm-dialog" role="dialog" aria-modal="true" aria-label="Confirmar eliminación"><span class="eyebrow">CONFIRMAR ACCIÓN</span><h2>Eliminar registro #@pendingDelete.Id</h2><p>Esta acción eliminará el registro. Si tiene información relacionada, el sistema impedirá su eliminación.</p><div class="form-actions"><button class="btn btn-danger" @onclick="Eliminar" disabled="@busy">Eliminar registro</button><button class="btn btn-outline-secondary" @onclick="()=>pendingDelete=null" disabled="@busy">Cancelar</button></div></section></div>
+}
+@code {
+    [Parameter] public string Endpoint {get;set;}="";
+    [Parameter] public string Title {get;set;}="";
+    [Parameter] public string Description {get;set;}="";
+    [Parameter] public string? RelatedUrl {get;set;}
+    [Parameter] public string? RelatedLabel {get;set;}
+    [Parameter,EditorRequired] public RenderFragment<TItem> Editor {get;set;}=default!;
+    [Parameter] public Column[] Columns {get;set;}=[];
+    [Parameter] public Func<TItem,string,string>? Formatter {get;set;}
+    private List<TItem> rows=[];
+    private List<TItem> filtered=>rows.Where(r=>string.IsNullOrWhiteSpace(search)||Columns.Any(c=>Cell(r,c.Property).Contains(search,StringComparison.OrdinalIgnoreCase))).ToList();
+    private TItem model=new(); private TItem? pendingDelete;
+    private string search=""; private string? error,success; private bool editing,busy,loading=true;
+    protected override async Task OnInitializedAsync()=>await Load();
+    private string Cell(TItem item,string property)
+    {
+        if(Formatter is not null) {var formatted=Formatter(item,property); if(formatted!="") return formatted;}
+        var value=typeof(TItem).GetProperty(property)?.GetValue(item);
+        return value switch {decimal d=>"Q "+d.ToString("N2"),DateTime d=>d.ToString("dd/MM/yyyy"),bool b=>b?"Masculino":"Femenino",_=>value?.ToString()??"—"};
+    }
+    private async Task Load()
+    {
+        loading=true;
+        try {rows=await Api.Get<List<TItem>>("api/"+Endpoint)??[];error=null;}
+        catch(Exception ex){error=ex.Message;} finally{loading=false;}
+    }
+    private void Nuevo(){model=new();editing=true;error=null;success=null;}
+    private void Editar(TItem item){model=System.Text.Json.JsonSerializer.Deserialize<TItem>(System.Text.Json.JsonSerializer.Serialize(item))!;editing=true;error=null;success=null;}
+    private void Cancelar(){editing=false;error=null;}
+    private async Task Guardar()
+    {
+        busy=true;error=null;success=null;
+        try {await Api.Send<TItem>(model.Id==0?HttpMethod.Post:HttpMethod.Put,"api/"+Endpoint+(model.Id==0?"":"/"+model.Id),model);editing=false;await Load();success="Registro guardado correctamente.";}
+        catch(Exception ex){error=ex.Message;} finally{busy=false;}
+    }
+    private async Task Eliminar()
+    {
+        busy=true;error=null;success=null;
+        try{await Api.Send<object>(HttpMethod.Delete,$"api/{Endpoint}/{pendingDelete!.Id}");if(model.Id==pendingDelete.Id)editing=false;pendingDelete=null;await Load();success="Registro eliminado correctamente.";}
+        catch(Exception ex){error=ex.Message;pendingDelete=null;}finally{busy=false;}
+    }
+    private async Task Upload(InputFileChangeEventArgs args)
+    {
+        busy=true;error=null;
+        try{await using var stream=args.File.OpenReadStream(2*1024*1024);((Producto)(object)model).Imagen=await Api.Upload(stream,args.File.Name);}
+        catch(Exception ex){error=ex.Message;}finally{busy=false;}
+    }
+}

@@ -1,0 +1,19 @@
+@page "/catalogos/productos"
+@inject ApiClient Api
+<GenericCrud TItem="Producto" Endpoint="productos" Title="Productos" Description="Controle sus productos, precios, imágenes y existencias." RelatedUrl="catalogos/marcas" RelatedLabel="Administrar Marcas" Columns="columns" Formatter="Format">
+<Editor Context="m">
+<div class="field"><label for="productos-Nombre">Producto *</label><input id="productos-Nombre" class="form-control" @bind="m.Nombre" maxlength="50" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Nombre)"/></div>
+<div class="field"><label for="productos-MarcaId">Marca *</label><InputSelect id="productos-MarcaId" class="form-select" @bind-Value="m.MarcaId"><option value="0">Seleccione una opción</option>@foreach(var item in options){<option value="@item.Id">@item.Nombre</option>}</InputSelect><ValidationMessage For="@(()=>m.MarcaId)"/></div>
+<div class="field"><label for="productos-Descripcion">Descripción *</label><input id="productos-Descripcion" class="form-control" @bind="m.Descripcion" maxlength="100" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Descripcion)"/></div>
+<div class="field"><label for="productos-PrecioCosto">Precio de costo (Q) *</label><input type="number" id="productos-PrecioCosto" class="form-control" @bind="m.PrecioCosto" min="0.01" step="0.01" @bind:event="oninput"/><ValidationMessage For="@(()=>m.PrecioCosto)"/></div>
+<div class="field"><label for="productos-PrecioVenta">Precio de venta (Q) *</label><input type="number" id="productos-PrecioVenta" class="form-control" @bind="m.PrecioVenta" min="0.01" step="0.01" @bind:event="oninput"/><ValidationMessage For="@(()=>m.PrecioVenta)"/></div>
+<div class="field"><label for="productos-Existencia">Existencia *</label><input type="number" id="productos-Existencia" class="form-control" @bind="m.Existencia" min="0" step="1" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Existencia)"/></div>
+<div class="field"><label for="productos-FechaIngreso">Fecha de ingreso *</label><InputDate id="productos-FechaIngreso" class="form-control" @bind-Value="m.FechaIngreso"/><ValidationMessage For="@(()=>m.FechaIngreso)"/></div>
+</Editor>
+</GenericCrud>
+@code {
+private Column[] columns=[new("Imagen","Imagen"),new("Nombre","Producto"),new("MarcaId","Marca"),new("PrecioCosto","Costo"),new("PrecioVenta","Venta"),new("Existencia","Existencia")];
+private List<Marca> options=[];
+protected override async Task OnInitializedAsync(){try{options=await Api.Get<List<Marca>>("api/marcas")??[];}catch{}}
+private string Format(Producto item,string property)=>property=="MarcaId" ? options.FirstOrDefault(x=>x.Id==item.MarcaId)?.Nombre??"Sin referencia" : "";
+}

@@ -1,0 +1,9 @@
+@page "/catalogos/marcas"
+<GenericCrud TItem="Marca" Endpoint="marcas" Title="Marcas" Description="Administre las marcas disponibles para sus productos." RelatedUrl="catalogos/productos" RelatedLabel="Volver a Productos" Columns="columns">
+<Editor Context="m">
+<div class="field"><label for="marcas-Nombre">Marca *</label><input id="marcas-Nombre" class="form-control" @bind="m.Nombre" maxlength="50" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Nombre)"/></div>
+</Editor>
+</GenericCrud>
+@code {
+private Column[] columns=[new("Nombre","Marca")];
+}

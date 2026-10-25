@@ -1,0 +1,19 @@
+{
+  "fechaUtc": "2026-10-21T22:21:39.423548+00:00",
+  "regresion": 13,
+  "sesiones_roles": 11,
+  "entorno": "Base de pruebas preexistente punto_venta_pruebas, API 5081",
+  "navegador": [
+    "Acceso administrador y empleado",
+    "Persistencia al cerrar todas las ventanas y reabrir",
+    "Cierre de sesión propagado a otra ventana",
+    "Sesión recuperada tras reinicio del servidor",
+    "Selección de roles Vendedor/Comprador y colores",
+    "NIT no existente abre modal y alta selecciona cliente",
+    "CF selecciona Cliente final",
+    "Vista previa y registro confirmado de venta",
+    "Vista previa y registro confirmado de compra",
+    "Acceso directo a módulo no autorizado bloqueado",
+    "Administrativo edita personal, sueldos y estado de egreso/reingreso"
+  ]
+}

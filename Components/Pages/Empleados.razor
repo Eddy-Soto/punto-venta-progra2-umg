@@ -1,0 +1,25 @@
+@page "/catalogos/empleados"
+@inject ApiClient Api
+<GenericCrud TItem="Empleado" Endpoint="empleados" Title="Empleados" Description="Administre su equipo y los puestos asignados." RelatedUrl="catalogos/puestos" RelatedLabel="Administrar Puestos" Columns="columns" Formatter="Format">
+<Editor Context="m">
+<div class="field"><label for="empleados-Nombres">Nombres *</label><input id="empleados-Nombres" class="form-control" @bind="m.Nombres" maxlength="60" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Nombres)"/></div>
+<div class="field"><label for="empleados-Apellidos">Apellidos *</label><input id="empleados-Apellidos" class="form-control" @bind="m.Apellidos" maxlength="60" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Apellidos)"/></div>
+<div class="field"><label for="empleados-Direccion">Dirección *</label><input id="empleados-Direccion" class="form-control" @bind="m.Direccion" maxlength="80" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Direccion)"/></div>
+<div class="field"><label for="empleados-Telefono">Teléfono *</label><input id="empleados-Telefono" class="form-control" @bind="m.Telefono" maxlength="25" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Telefono)"/></div>
+<div class="field"><label for="empleados-Dpi">DPI *</label><input id="empleados-Dpi" class="form-control" @bind="m.Dpi" maxlength="15" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Dpi)"/></div>
+<div class="field"><label for="empleados-Genero">Género *</label><InputSelect id="empleados-Genero" class="form-select" @bind-Value="m.Genero"><option value="false">Femenino</option><option value="true">Masculino</option></InputSelect><ValidationMessage For="@(()=>m.Genero)"/></div>
+<div class="field"><label for="empleados-FechaNacimiento">Fecha de nacimiento *</label><InputDate id="empleados-FechaNacimiento" class="form-control" @bind-Value="m.FechaNacimiento"/><ValidationMessage For="@(()=>m.FechaNacimiento)"/></div>
+<div class="field"><label for="empleados-PuestoId">Puesto *</label><InputSelect id="empleados-PuestoId" class="form-select" @bind-Value="m.PuestoId"><option value="0">Seleccione una opción</option>@foreach(var item in options){<option value="@item.Id">@item.Nombre</option>}</InputSelect><ValidationMessage For="@(()=>m.PuestoId)"/></div>
+<div class="field"><label for="empleados-FechaInicioLabores">Inicio de labores *</label><InputDate id="empleados-FechaInicioLabores" class="form-control" @bind-Value="m.FechaInicioLabores"/><ValidationMessage For="@(()=>m.FechaInicioLabores)"/></div>
+<div class="field"><label for="sueldo">Sueldo mensual (Q)</label><input id="sueldo" type="number" step="0.01" min="0" class="form-control" @bind="m.Sueldo" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Sueldo)"/></div>
+<div class="field"><label for="activo">Estado laboral</label><InputSelect id="activo" class="form-select" @bind-Value="m.Activo" @bind-Value:after="()=>CambiarEstado(m)"><option value="true">Activo</option><option value="false">Egresado</option></InputSelect></div>
+@if(!m.Activo){<div class="field"><label for="egreso">Fecha de egreso *</label><InputDate id="egreso" class="form-control" @bind-Value="m.FechaEgreso"/></div>}
+</Editor>
+</GenericCrud>
+@code {
+private void CambiarEstado(Empleado e){if(e.Activo)e.FechaEgreso=null;else e.FechaEgreso??=DateTime.Today;}
+private Column[] columns=[new("NombreCompleto","Empleado"),new("Dpi","DPI"),new("PuestoId","Puesto"),new("Sueldo","Sueldo mensual"),new("Activo","Estado")];
+private List<Puesto> options=[];
+protected override async Task OnInitializedAsync(){try{options=await Api.Get<List<Puesto>>("api/puestos")??[];}catch{}}
+private string Format(Empleado item,string property)=>property=="Activo"?(item.Activo?"Activo":"Egresado"):property=="PuestoId" ? options.FirstOrDefault(x=>x.Id==item.PuestoId)?.Nombre??"Sin referencia" : "";
+}

@@ -1,0 +1,14 @@
+@page "/catalogos/clientes"
+<GenericCrud TItem="Cliente" Endpoint="clientes" Title="Clientes" Description="Mantenga actualizados los datos de sus clientes." RelatedUrl="documentos/ventas" RelatedLabel="Ir a Ventas" Columns="columns">
+<Editor Context="m">
+<div class="field"><label for="clientes-Nombres">Nombres *</label><input id="clientes-Nombres" class="form-control" @bind="m.Nombres" maxlength="60" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Nombres)"/></div>
+<div class="field"><label for="clientes-Apellidos">Apellidos *</label><input id="clientes-Apellidos" class="form-control" @bind="m.Apellidos" maxlength="60" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Apellidos)"/></div>
+<div class="field"><label for="clientes-Nit">NIT *</label><input id="clientes-Nit" class="form-control" @bind="m.Nit" maxlength="12" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Nit)"/></div>
+<div class="field"><label for="clientes-Genero">Género *</label><InputSelect id="clientes-Genero" class="form-select" @bind-Value="m.Genero"><option value="false">Femenino</option><option value="true">Masculino</option></InputSelect><ValidationMessage For="@(()=>m.Genero)"/></div>
+<div class="field"><label for="clientes-Telefono">Teléfono *</label><input id="clientes-Telefono" class="form-control" @bind="m.Telefono" maxlength="25" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Telefono)"/></div>
+<div class="field"><label for="clientes-CorreoElectronico">Correo electrónico *</label><input id="clientes-CorreoElectronico" class="form-control" @bind="m.CorreoElectronico" maxlength="45" type="email" @bind:event="oninput"/><ValidationMessage For="@(()=>m.CorreoElectronico)"/></div>
+</Editor>
+</GenericCrud>
+@code {
+private Column[] columns=[new("NombreCompleto","Cliente"),new("Nit","NIT"),new("Telefono","Teléfono"),new("CorreoElectronico","Correo")];
+}

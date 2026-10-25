@@ -1,0 +1,24 @@
+@page "/administracion/cuentas"
+@inject ApiClient Api
+<PageTitle>Cuentas y roles · Punto de Venta</PageTitle>
+<div class="page-heading"><div><span class="eyebrow">ADMINISTRACIÓN</span><h1>Cuentas y roles</h1><p>Asigna a cada empleado las funciones que puede utilizar.</p></div><button class="btn btn-primary" @onclick="Nuevo">+ Nueva cuenta</button></div>
+@if(error is not null){<div class="alert alert-danger" role="alert">@error</div>}
+@if(success is not null){<div class="alert alert-success" role="status">@success</div>}
+@if(editing)
+{
+<section class="panel"><h2>@(model.Id==0?"Nueva cuenta de empleado":"Editar cuenta y permisos")</h2><EditForm Model="model" OnValidSubmit="Guardar" novalidate="novalidate" @key="model"><DataAnnotationsValidator/><ValidationSummary/><div class="form-grid">
+<div class="field"><label for="cuenta-nombre">Usuario *</label><input id="cuenta-nombre" class="form-control" maxlength="50" @bind="model.Nombre" @bind:event="oninput"/></div>
+<div class="field"><label for="cuenta-empleado">Empleado *</label><InputSelect id="cuenta-empleado" class="form-select" @bind-Value="model.EmpleadoId" disabled="@(model.Id!=0)"><option value="">Seleccione empleado</option>@foreach(var e in empleados){<option value="@e.Id">@e.NombreCompleto @(e.Activo?"":"(egresado)")</option>}</InputSelect></div>
+<div class="field"><label for="cuenta-clave">@(model.Id==0?"Contraseña inicial *":"Nueva contraseña (opcional)")</label><input id="cuenta-clave" type="password" class="form-control" autocomplete="new-password" @bind="model.Password" @bind:event="oninput"/><small class="muted">Al menos 6 caracteres. Vacío conserva la clave actual.</small></div>
+</div><div class="role-checkboxes"><label><InputCheckbox @bind-Value="model.Vendedor"/> Vendedor</label><label><InputCheckbox @bind-Value="model.Comprador"/> Comprador</label><label><InputCheckbox @bind-Value="model.Administrativo"/> Administrativo</label><label><InputCheckbox @bind-Value="model.Activo"/> Acceso activo</label></div><p class="muted">Puedes combinar roles. Guardar cambios cierra las sesiones anteriores de esa cuenta para aplicar los nuevos permisos.</p><div class="form-actions"><button type="submit" class="btn btn-primary" disabled="@busy">Guardar cuenta y roles</button><button type="button" class="btn btn-outline-secondary" @onclick="()=>editing=false" disabled="@busy">Cancelar</button></div></EditForm></section>
+}
+<section class="panel"><div class="section-title"><h2>Accesos del sistema</h2><button class="btn btn-outline-secondary" @onclick="Load">Actualizar</button></div><div class="table-responsive"><table class="table"><thead><tr><th>Usuario</th><th>Empleado</th><th>Roles</th><th>Estado</th><th></th></tr></thead><tbody>@foreach(var c in cuentas){<tr><td>@c.Nombre</td><td>@c.Empleado</td><td>@Roles(c)</td><td>@(c.Activo?"Activo":"Inactivo")</td><td>@if(!c.EsAdministrador){<button class="btn btn-sm btn-outline-primary" @onclick="()=>Editar(c)">Editar permisos</button>}else{<span class="muted">Control total</span>}</td></tr>}</tbody></table></div></section>
+@code{
+    List<CuentaVista> cuentas=[];List<Empleado> empleados=[];CuentaRequest model=new();bool editing,busy;string? error,success;
+    protected override async Task OnInitializedAsync()=>await Load();
+    private async Task Load(){try{cuentas=await Api.Get<List<CuentaVista>>("api/cuentas")??[];empleados=await Api.Get<List<Empleado>>("api/empleados")??[];}catch(Exception ex){error=ex.Message;}}
+    private void Nuevo(){model=new();editing=true;error=null;success=null;}
+    private void Editar(CuentaVista c){model=new(){Id=c.Id,Nombre=c.Nombre,EmpleadoId=c.EmpleadoId,Vendedor=c.Vendedor,Comprador=c.Comprador,Administrativo=c.Administrativo,Activo=c.Activo};editing=true;error=null;success=null;}
+    private string Roles(CuentaVista c)=>c.EsAdministrador?"Administrador":string.Join(" · ",new[]{c.Vendedor?"Vendedor":null,c.Comprador?"Comprador":null,c.Administrativo?"Administrativo":null}.Where(x=>x is not null));
+    private async Task Guardar(){busy=true;error=null;try{await Api.Send<object>(model.Id==0?HttpMethod.Post:HttpMethod.Put,"api/cuentas"+(model.Id==0?"":"/"+model.Id),model);editing=false;await Load();success="Cuenta y roles guardados.";}catch(Exception ex){error=ex.Message;}finally{busy=false;}}
+}

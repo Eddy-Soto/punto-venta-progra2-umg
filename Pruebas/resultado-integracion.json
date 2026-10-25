@@ -1,0 +1,23 @@
+{
+  "passed": [
+    "JWT, rechazo sin sesión y menú padre-hijo",
+    "Crear, consultar, editar y buscar en los seis CRUD",
+    "Validaciones, duplicados y protección de relaciones",
+    "Eliminar y verificar eliminación en los seis CRUD",
+    "Compra: 20 + 10 = 30; costo Q100 y venta Q125",
+    "Rechazo de edición obsoleta de inventario",
+    "Venta: stock 25 y total Q625; precio manipulado ignorado",
+    "Existencia insuficiente rechazada sin modificar inventario",
+    "Documento duplicado revierte toda la transacción",
+    "Dos ventas simultáneas: una aceptada, otra rechazada; stock final 5",
+    "Detalle nulo, cantidad cero, producto duplicado y referencia inexistente rechazados",
+    "Compra y venta con varios productos; rollback de todas las líneas ante duplicado",
+    "Carga real de PNG, ruta persistida, imagen accesible y contenido inválido rechazado"
+  ],
+  "sample": {
+    "producto": 6,
+    "cliente": 6,
+    "empleado": 5,
+    "proveedor": 5
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "fechaUtc": "2026-10-21T22:19:32.757526+00:00",
+  "api": "http://127.0.0.1:5081/",
+  "aprobados": [
+    "Cookie HttpOnly persistente, recuperación de sesión y protección CSRF",
+    "JWT firmado; cierre revoca el token incluso si se conserva una copia",
+    "Cuatro combinaciones de roles y menú filtrado por permisos",
+    "Permisos aplicados en API: vendedor no compra, comprador no vende y RRHH no altera cuentas",
+    "Búsqueda exacta NIT normalizado, CF, no encontrado y alta de cliente desde ventas",
+    "Vista previa de compra sin guardar y confirmación con detalle exacto",
+    "Factura con NIT, precio oficial, vendedor autenticado, historial propio e instantánea del cliente",
+    "Cambio de roles revoca sesiones previas y aplica permisos nuevos",
+    "Cuenta rechaza claves cortas y conserva la clave cuando se deja vacía",
+    "Administrativo modifica sueldo y egreso; egreso revoca el acceso del empleado",
+    "Reingreso permite un nuevo acceso sin restaurar sesiones revocadas"
+  ]
+}

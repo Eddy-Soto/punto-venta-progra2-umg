@@ -1,0 +1,11 @@
+{
+  "fechaUtc": "2026-10-22T15:34:36.040926+00:00",
+  "pruebas": [
+    "Productos unidos con marcas; cantidad y unidades coinciden con el catálogo",
+    "Valoración de inventario, filtros de stock y resultados vacíos",
+    "Compras y ventas: totales desde detalles, documentos relacionados y fechas inclusivas",
+    "Validaciones de API y opción Reportes en menú dinámico",
+    "Informes globales protegidos: acceso anónimo y empleado rechazados"
+  ],
+  "soloLecturaComercial": true
+}

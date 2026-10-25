@@ -1,0 +1,19 @@
+<div class="modal-backdrop-custom"><section class="document-dialog" role="dialog" aria-modal="true" aria-label="Nuevo cliente"><span class="eyebrow">NIT NO REGISTRADO</span><h2>Registrar nuevo cliente</h2><p>Completa los datos para continuar con la venta.</p>
+@if(error is not null){<div class="alert alert-danger" role="alert">@error</div>}
+<EditForm Model="model" OnValidSubmit="Guardar" novalidate="novalidate"><DataAnnotationsValidator/><ValidationSummary/><div class="form-grid">
+<div class="field"><label for="nuevo-nit">NIT *</label><input id="nuevo-nit" class="form-control" readonly @bind="model.Nit"/></div>
+<div class="field"><label for="nuevo-nombres">Nombres *</label><input id="nuevo-nombres" class="form-control" maxlength="60" @bind="model.Nombres" @bind:event="oninput"/></div>
+<div class="field"><label for="nuevo-apellidos">Apellidos *</label><input id="nuevo-apellidos" class="form-control" maxlength="60" @bind="model.Apellidos" @bind:event="oninput"/></div>
+<div class="field"><label for="nuevo-telefono">Teléfono *</label><input id="nuevo-telefono" class="form-control" maxlength="25" @bind="model.Telefono" @bind:event="oninput"/></div>
+<div class="field"><label for="nuevo-correo">Correo electrónico *</label><input id="nuevo-correo" type="email" class="form-control" maxlength="45" @bind="model.CorreoElectronico" @bind:event="oninput"/></div>
+<div class="field"><label for="nuevo-genero">Género</label><InputSelect id="nuevo-genero" class="form-select" @bind-Value="model.Genero"><option value="false">Femenino</option><option value="true">Masculino</option></InputSelect></div>
+</div><div class="form-actions"><button class="btn btn-primary" type="submit" disabled="@busy">Guardar y seleccionar cliente</button><button class="btn btn-outline-secondary" type="button" @onclick="OnCancel" disabled="@busy">Cancelar</button></div></EditForm></section></div>
+@code{
+    [Parameter]public string Nit{get;set;}="";
+    [Parameter]public EventCallback<Cliente> OnSaved{get;set;}
+    [Parameter]public EventCallback OnCancel{get;set;}
+    [Inject]public ApiClient Api{get;set;}=default!;
+    Cliente model=new();bool busy;string? error;
+    protected override void OnInitialized()=>model.Nit=Nit;
+    private async Task Guardar(){busy=true;error=null;try{var saved=await Api.Send<Cliente>(HttpMethod.Post,"api/clientes",model);await OnSaved.InvokeAsync(saved!);}catch(Exception ex){error=ex.Message;}finally{busy=false;}}
+}

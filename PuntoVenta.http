@@ -1,0 +1,76 @@
+@baseUrl = http://127.0.0.1:5080
+@token = PEGAR_EL_TOKEN_DEL_LOGIN
+
+### Iniciar sesión
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{"usuario":"admin","password":"CONFIGURAR_CLAVE_ADMIN"}
+
+### Menú dinámico
+GET {{baseUrl}}/api/menu
+Authorization: Bearer {{token}}
+
+### Productos
+GET {{baseUrl}}/api/productos
+Authorization: Bearer {{token}}
+
+### Buscar clientes
+GET {{baseUrl}}/api/clientes?buscar=Carlos
+Authorization: Bearer {{token}}
+
+### Crear puesto
+POST {{baseUrl}}/api/puestos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"nombre":"Supervisor"}
+
+### Editar puesto: use el ID devuelto al crearlo
+PUT {{baseUrl}}/api/puestos/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"id":2,"nombre":"Supervisor de tienda"}
+
+### Eliminar puesto sin relaciones
+DELETE {{baseUrl}}/api/puestos/2
+Authorization: Bearer {{token}}
+
+### Compra de demostración: cambie el número y la fecha al repetir
+POST {{baseUrl}}/api/documentos/compras
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"numero":1,"terceroId":1,"fecha":"2026-10-17","detalles":[{"productoId":1,"cantidad":10,"precio":100}]}
+
+### Venta de demostración
+POST {{baseUrl}}/api/documentos/ventas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"numero":1,"serie":"A","terceroId":1,"empleadoId":1,"fecha":"2026-10-17","detalles":[{"productoId":1,"cantidad":5,"precio":125}]}
+
+### Historial con detalles y totales
+GET {{baseUrl}}/api/documentos/ventas
+Authorization: Bearer {{token}}
+
+
+
+### Consultar sesión actual
+GET {{baseUrl}}/api/auth/session
+Authorization: Bearer {{token}}
+
+### Buscar Cliente final sin listar todos los clientes
+GET {{baseUrl}}/api/clientes/por-nit?nit=CF
+Authorization: Bearer {{token}}
+
+### Acceso de empleado (API)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{"usuario":"EMPLEADO","password":"CONFIGURAR_CLAVE_EMPLEADO"}
+
+### Cerrar sesión y revocar el token
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{token}}

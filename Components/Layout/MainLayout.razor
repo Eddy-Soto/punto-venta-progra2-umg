@@ -1,0 +1,51 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject ApiClient Api
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@if(restoring)
+{
+    <div class="session-loading"><h2>Punto de Venta</h2><p>Recuperando sesión…</p></div>
+}
+else if(!Api.LoggedIn)
+{
+    <div class="login-shell"><section class="login-story"><a class="brand" href="/">PV<span>Punto de Venta</span></a><div><span class="eyebrow">ADMINISTRACIÓN COMERCIAL</span><h1>Todo tu negocio,<br/>en un solo lugar.</h1><p>Productos, compras y ventas conectados con tu inventario.</p><div class="login-features"><span>01 · Catálogos</span><span>02 · Compras</span><span>03 · Ventas</span></div></div><small>Proyecto de Programación II</small></section>
+    <section class="login-panel"><div class="login-card"><span class="eyebrow">BIENVENIDO</span><h2>Iniciar sesión</h2><div class="access-tabs"><button class="@(login.Acceso=="administrador"?"active":"")" @onclick='()=>CambiarAcceso("administrador")'>Administrador</button><button class="@(login.Acceso=="empleado"?"active":"")" @onclick='()=>CambiarAcceso("empleado")'>Empleado</button></div><p class="muted">@(login.Acceso=="administrador"?"Acceso a la administración del sistema.":"Acceso a las funciones asignadas a tu empleado.")</p>
+    @if(error is not null){<div class="alert alert-danger" role="alert">@error</div>}
+    <EditForm novalidate="novalidate" Model="login" OnValidSubmit="SignIn"><DataAnnotationsValidator/><ValidationSummary/>
+    <div class="field"><label for="user">Usuario</label><input id="user" class="form-control" @bind="login.Usuario" @bind:event="oninput" autocomplete="username"/></div>
+    <div class="field"><label for="password">Contraseña</label><input id="password" type="password" class="form-control" @bind="login.Password" @bind:event="oninput" autocomplete="current-password"/></div>
+    <button class="btn btn-primary w-100" type="submit" disabled="@busy">@(busy?"Conectando…":"Entrar al sistema →")</button></EditForm><p class="login-note">La sesión permanece en este navegador hasta cerrarla o alcanzar su vencimiento de 7 días.</p></div></section></div>
+}
+else
+{
+    <div class="app-shell @Theme"><aside class="app-sidebar"><a class="brand" href="/">PV<span>Punto de Venta<small>@RoleLabel</small></span></a><div class="nav-caption">ESPACIO DE TRABAJO</div><nav><NavLink href="/" Match="NavLinkMatch.All" class="main-nav">◈ &nbsp; @(Api.Admin?"Resumen":"Mis funciones")</NavLink>
+    @foreach(var item in menu.Where(x=>x.PadreId is null))
+    {<div class="nav-group"><NavLink href="@item.Ruta" class="main-nav">@item.Titulo</NavLink>@foreach(var child in menu.Where(x=>x.PadreId==item.Id)){<NavLink href="@child.Ruta" class="child-nav">@child.Titulo</NavLink>@foreach(var grand in menu.Where(x=>x.PadreId==child.Id)){<NavLink href="@grand.Ruta" class="grand-nav">@grand.Titulo</NavLink>}}</div>}
+    </nav><div class="sidebar-footer"><span class="status-dot"></span> Sesión activa<br/><small>@RoleLabel</small></div></aside><main class="app-main"><header class="app-topbar"><span>@RoleLabel</span><div><span class="user-badge">@Api.Usuario</span><button class="btn btn-sm btn-outline-secondary" disabled="@busy" @onclick="SignOut">Cerrar sesión</button></div></header><article class="app-content">
+    @if(menuError is not null){<div class="alert alert-danger">@menuError <button class="btn btn-sm" @onclick="LoadMenu">Reintentar</button></div>}
+    @if(Api.PuedeRuta(Path)){@Body}else{<section class="panel"><h1>Acceso no autorizado</h1><p>Tu cuenta no tiene permisos para este módulo.</p><a href="/" class="btn btn-primary">Volver a mis funciones</a></section>}
+    </article><footer class="app-footer">Punto de Venta <span>@Api.Perfil?.Empleado</span></footer></main></div>
+}
+<div id="blazor-error-ui" data-nosnippet>Se perdió la conexión con la aplicación. <a href=".">Recargar</a><span class="dismiss">×</span></div>
+@code {
+    private LoginRequest login=new(){Acceso="administrador"};private bool busy,restoring=true;private string? error,menuError;private List<MenuItem> menu=[];
+    private string Path=>Nav.ToBaseRelativePath(Nav.Uri);
+    private string RoleLabel=>string.Join(" · ",Api.Perfil?.Roles??[]);
+    private string Theme=>Api.Admin?"theme-admin":Path.StartsWith("documentos/ventas")?"theme-vendedor":Path.StartsWith("documentos/compras")?"theme-comprador":Path.StartsWith("catalogos/")?"theme-administrativo":Api.Vender&&!Api.Comprar&&!Api.Personal?"theme-vendedor":Api.Comprar&&!Api.Vender&&!Api.Personal?"theme-comprador":Api.Personal&&!Api.Comprar&&!Api.Vender?"theme-administrativo":"theme-multiple";
+    protected override void OnInitialized()=>Api.Changed+=Changed;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(!firstRender)return;
+        try{await Api.Restore();if(Api.LoggedIn){await LoadMenu();await JS.InvokeVoidAsync("pvSession.watch");}}
+        catch(Exception ex){error=ex.Message;}
+        finally{restoring=false;StateHasChanged();}
+    }
+    private void CambiarAcceso(string tipo){login.Acceso=tipo;error=null;}
+    private void Changed()=>InvokeAsync(StateHasChanged);
+    private async Task SignIn(){busy=true;error=null;try{await Api.Login(login);}catch(Exception ex){error=ex.Message;busy=false;}}
+    private async Task LoadMenu(){try{menu=await Api.Get<List<MenuItem>>("api/menu")??[];menuError=null;}catch(Exception ex){menuError=ex.Message;}}
+    private async Task SignOut(){busy=true;try{await Api.Logout();}catch(Exception ex){menuError=ex.Message;busy=false;}}
+    public void Dispose()=>Api.Changed-=Changed;
+}

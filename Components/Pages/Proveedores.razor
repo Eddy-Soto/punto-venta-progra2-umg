@@ -1,0 +1,12 @@
+@page "/catalogos/proveedores"
+<GenericCrud TItem="Proveedor" Endpoint="proveedores" Title="Proveedores" Description="Gestione los proveedores de su negocio." RelatedUrl="documentos/compras" RelatedLabel="Volver a Compras" Columns="columns">
+<Editor Context="m">
+<div class="field"><label for="proveedores-Nombre">Proveedor *</label><input id="proveedores-Nombre" class="form-control" @bind="m.Nombre" maxlength="60" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Nombre)"/></div>
+<div class="field"><label for="proveedores-Nit">NIT *</label><input id="proveedores-Nit" class="form-control" @bind="m.Nit" maxlength="12" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Nit)"/></div>
+<div class="field"><label for="proveedores-Direccion">Dirección *</label><input id="proveedores-Direccion" class="form-control" @bind="m.Direccion" maxlength="80" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Direccion)"/></div>
+<div class="field"><label for="proveedores-Telefono">Teléfono *</label><input id="proveedores-Telefono" class="form-control" @bind="m.Telefono" maxlength="25" type="text" @bind:event="oninput"/><ValidationMessage For="@(()=>m.Telefono)"/></div>
+</Editor>
+</GenericCrud>
+@code {
+private Column[] columns=[new("Nombre","Proveedor"),new("Nit","NIT"),new("Direccion","Dirección"),new("Telefono","Teléfono")];
+}

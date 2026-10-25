@@ -1,0 +1,78 @@
+@page "/reportes"
+@inject ApiClient Api
+@inject IJSRuntime JS
+
+<PageTitle>Reportes · Punto de Venta</PageTitle>
+<section class="reports-page">
+<div class="page-heading no-print"><span class="eyebrow">CONSULTAS DEL NEGOCIO</span><h1>Reportes</h1><p>Consulta el inventario y las operaciones registradas.</p></div>
+@if(Api.Admin)
+{
+<form class="panel report-filters no-print" @onsubmit="Consultar" @onsubmit:preventDefault>
+    <div class="field"><label for="report-tipo">Reporte</label><select id="report-tipo" class="form-select" @bind="tipo"><option value="productos">Productos</option><option value="existencias">Existencias</option><option value="compras">Compras</option><option value="ventas">Ventas</option></select></div>
+    <div class="field"><label for="report-buscar">Buscar nombre, marca, NIT o vendedor</label><input id="report-buscar" class="form-control" maxlength="100" @bind="buscar"/></div>
+    @if(tipo is "compras" or "ventas")
+    {
+        <div class="field"><label for="report-desde">Desde</label><InputDate id="report-desde" class="form-control" @bind-Value="desde"/></div>
+        <div class="field"><label for="report-hasta">Hasta</label><InputDate id="report-hasta" class="form-control" @bind-Value="hasta"/></div>
+    }
+    else
+    {
+        <div class="field"><label for="report-estado">Existencia</label><select id="report-estado" class="form-select" @bind="estado"><option value="todos">Todos los productos</option><option value="bajo">Baja: 5 unidades o menos</option><option value="agotado">Agotados</option></select></div>
+    }
+    <button class="btn btn-primary" disabled="@busy" type="submit">@(busy?"Consultando…":"Generar reporte")</button>
+</form>
+@if(error is not null){<div class="alert alert-danger no-print" role="alert">@error</div>}
+@if(reporte is not null)
+{
+<section class="panel printable-document report-document">
+    <div class="section-title"><div><span class="eyebrow">PUNTO DE VENTA</span><h2>Reporte de @reporte.Tipo</h2><p class="muted">Generado: @reporte.Generado.ToString("dd/MM/yyyy HH:mm") · @filtros</p></div><button class="btn btn-outline-primary no-print" @onclick="Imprimir">Imprimir / Guardar PDF</button></div>
+    @if(reporte.Tipo is "productos" or "existencias")
+    {
+        <p><strong>@reporte.Productos.Count productos · @reporte.Productos.Sum(x=>(long)x.Existencia) unidades</strong></p>
+        <div class="table-responsive"><table class="table"><thead><tr><th>Producto</th><th>Marca</th><th>Existencia</th>@if(reporte.Tipo=="productos"){<th>Costo unitario</th><th>Venta unitaria</th>}else{<th>Valor al costo</th><th>Valor a venta</th>}</tr></thead><tbody>
+        @foreach(var p in reporte.Productos){<tr><td>@p.Producto</td><td>@p.Marca</td><td>@p.Existencia</td><td>Q @((reporte.Tipo=="productos"?p.PrecioCosto:p.ValorCosto).ToString("N2"))</td><td>Q @((reporte.Tipo=="productos"?p.PrecioVenta:p.ValorVenta).ToString("N2"))</td></tr>}
+        </tbody></table></div>
+        @if(reporte.Productos.Count==0){<p class="empty-state">No se encontraron productos con estos filtros.</p>}
+        @if(reporte.Tipo=="existencias"){<p><strong>Valor total al costo: Q @reporte.Productos.Sum(x=>x.ValorCosto).ToString("N2") · Valor a precio de venta: Q @reporte.Productos.Sum(x=>x.ValorVenta).ToString("N2")</strong></p><p class="muted">Valoración con precios actuales; no representa la utilidad realizada.</p>}
+    }
+    else
+    {
+        <p><strong>@reporte.Operaciones.Count documentos · Total: Q @reporte.Operaciones.Sum(x=>x.Total).ToString("N2")</strong></p>
+        <div class="table-responsive"><table class="table"><thead><tr><th>Fecha</th><th>Documento</th><th>@(reporte.Tipo=="compras"?"Proveedor":"Cliente")</th><th>NIT</th>@if(reporte.Tipo=="ventas"){<th>Empleado</th>}<th>Total</th></tr></thead><tbody>
+        @foreach(var d in reporte.Operaciones){<tr><td>@d.Fecha.ToString("dd/MM/yyyy")</td><td>@d.Serie @d.Numero</td><td>@d.Tercero</td><td>@d.Nit</td>@if(reporte.Tipo=="ventas"){<td>@d.Empleado</td>}<td>Q @d.Total.ToString("N2")</td></tr>}
+        </tbody></table></div>
+        @if(reporte.Operaciones.Count==0){<p class="empty-state">No se encontraron operaciones con estos filtros.</p>}
+    }
+</section>
+}
+}
+</section>
+@code {
+    private string tipo="productos",buscar="",estado="todos",filtros="";
+    private DateTime? desde,hasta;
+    private bool busy;
+    private string? error;
+    private ReporteVista? reporte;
+    protected override async Task OnInitializedAsync(){if(Api.Admin)await Consultar();}
+    private async Task Consultar()
+    {
+        busy=true;error=null;reporte=null;
+        try
+        {
+            if(tipo is "compras" or "ventas" && desde>hasta)throw new InvalidOperationException("La fecha inicial no puede ser posterior a la final.");
+            var query=$"api/reportes/{tipo}?buscar={Uri.EscapeDataString(buscar)}";
+            if(tipo is "compras" or "ventas")
+            {
+                if(desde.HasValue)query+=$"&desde={desde:yyyy-MM-dd}";
+                if(hasta.HasValue)query+=$"&hasta={hasta:yyyy-MM-dd}";
+                filtros=$"Desde {desde?.ToString("dd/MM/yyyy")??"el inicio"} hasta {hasta?.ToString("dd/MM/yyyy")??"la última operación"}";
+            }
+            else{query+=$"&estado={estado}";filtros=estado=="todos"?"Todas las existencias":estado=="bajo"?"5 unidades o menos":"Productos agotados";}
+            if(!string.IsNullOrWhiteSpace(buscar))filtros+=$" · Búsqueda: {buscar}";
+            reporte=await Api.Get<ReporteVista>(query);
+        }
+        catch(Exception ex){error=ex.Message;}
+        finally{busy=false;}
+    }
+    private async Task Imprimir()=>await JS.InvokeVoidAsync("window.print");
+}

@@ -1,0 +1,21 @@
+@if(Documento is not null)
+{
+<div class="modal-backdrop-custom document-preview-backdrop"><section class="document-dialog printable-document" role="dialog" aria-modal="true" aria-label="@(EsCompra?"Vista previa de compra":"Vista previa de factura")">
+<div class="section-title"><div><span class="eyebrow">PUNTO DE VENTA</span><h2>@(EsCompra?"Orden de compra":"Factura de venta") @Documento.Serie@Documento.Numero.ToString("D5")</h2></div><span class="tag">@(Confirmado?"REGISTRADA":"VISTA PREVIA · SIN REGISTRAR")</span></div>
+<div class="invoice-parties"><p><strong>Fecha:</strong> @Documento.Fecha.ToString("dd/MM/yyyy")<br/><strong>@(EsCompra?"Proveedor":"Cliente"):</strong> @Documento.Tercero<br/><strong>NIT:</strong> @(Documento.Nit==""?"—":Documento.Nit)</p>@if(!EsCompra){<p><strong>Atendido por:</strong><br/>@Documento.Empleado</p>}</div>
+<div class="table-responsive"><table class="table"><thead><tr><th>Producto</th><th>Cantidad</th><th>@(EsCompra?"Costo unitario":"Precio unitario")</th><th class="text-end">Subtotal</th></tr></thead><tbody>@foreach(var l in Documento.Detalles){<tr><td>@l.Producto</td><td>@l.Cantidad</td><td>Q @l.Precio.ToString("N2")</td><td class="text-end">Q @l.Subtotal.ToString("N2")</td></tr>}</tbody></table></div>
+<div class="document-total"><span>@Documento.Detalles.Sum(x=>(long)x.Cantidad) unidades</span><div><small>TOTAL</small><strong>Q @Documento.Total.ToString("N2")</strong></div></div>
+<p class="invoice-note">@(Confirmado?"Documento interno del proyecto académico.":"Revisa los datos antes de registrar. El inventario aún no ha cambiado.")</p>
+<div class="form-actions no-print">@if(!Confirmado){<button class="btn btn-primary" @onclick="OnConfirm" disabled="@Busy">@(Busy?"Registrando…":EsCompra?"Registrar compra":"Registrar venta")</button>}else{<button class="btn btn-outline-primary" @onclick="Print">Imprimir / Guardar PDF</button>}<button class="btn btn-outline-secondary" @onclick="OnClose" disabled="@Busy">@(Confirmado?"Cerrar":"Volver y corregir")</button></div>
+</section></div>
+}
+@code{
+    [Parameter]public DocumentoVista? Documento{get;set;}
+    [Parameter]public bool EsCompra{get;set;}
+    [Parameter]public bool Confirmado{get;set;}
+    [Parameter]public bool Busy{get;set;}
+    [Parameter]public EventCallback OnConfirm{get;set;}
+    [Parameter]public EventCallback OnClose{get;set;}
+    [Inject]public IJSRuntime JS{get;set;}=default!;
+    private Task Print()=>JS.InvokeVoidAsync("pvPrint").AsTask();
+}
