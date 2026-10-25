@@ -2,13 +2,13 @@
 
 Este proyecto permite administrar un pequeño punto de venta: mantener los catálogos, recibir compras, registrar ventas y consultar reportes. Se desarrolló con .NET 10, ASP.NET Core Web API, Blazor interactivo, Entity Framework Core y MySQL 8.0.
 
-## Para el docente: cómo probarlo
+## Para el Inge. Cardona: cómo probarlo
 
-La forma más sencilla de revisarlo es ejecutar la demostración en Windows. El iniciador prepara su propia base con datos ficticios; no necesita las contraseñas del estudiante ni acceso a Azure.
+La forma más sencilla de revisarlo es ejecutar la demostración en Windows. El iniciador prepara su propia base con datos ficticios; no necesita las contraseñas ni acceso a Azure.
 
 ### 1. Para dar inicio
 
-Instale estos dos componentes :
+Unicamente para asegurarme,  su compu debe tener estos dos componentes :
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0). Para esta opción se necesita el SDK; el Runtime por sí solo no compila el proyecto.
 - [MySQL Server 8.0](https://dev.mysql.com/downloads/installer/). MySQL Workbench por sí solo no incluye el servidor. El iniciador busca los ejecutables en `C:\Program Files\MySQL\MySQL Server 8.0\bin`.
